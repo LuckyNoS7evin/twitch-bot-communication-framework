@@ -36,7 +36,7 @@ namespace backend
             services.AddScoped<AmazonDynamoDBClient>();
             services.AddScoped<ChannelRepository>();
             services.AddScoped<UserRepository>();
-            // services.AddScoped<TwitchService>();
+            services.AddScoped<MessageRepository>();
             services.AddHttpClient<TwitchService>();
 
             IConfigurationManager<OpenIdConnectConfiguration> configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>($"https://id.twitch.tv/oauth2/.well-known/openid-configuration", new OpenIdConnectConfigurationRetriever());

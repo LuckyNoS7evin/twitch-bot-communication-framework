@@ -1,27 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace backend.ExtensionMethods
 {
     public static class StringEncryptionExtensions
     {
-        public static string Encrypt(this string text, string keyString)
+        public static string Encrypt(this string text, string secretString, string clientIdString)
         {
-            var key = Convert.FromBase64String(keyString);
+            var key = Convert.FromBase64String(secretString);
+            var iv = Convert.FromBase64String(clientIdString);
             var textArray = Encoding.UTF8.GetBytes(text);
             using (Aes aes = new AesManaged())
             {
                 aes.Padding = PaddingMode.PKCS7;
-                aes.KeySize = 128;          // in bits
+                aes.KeySize = 256;          // in bits
                 aes.Key = key;  // 32 bytes for 256 bit encryption
-                aes.IV = key;   // AES needs a 16-byte IV
-                                                            // Should set Key and IV here.  Good approach: derive them from 
-                                                            // a password via Cryptography.Rfc2898DeriveBytes 
+                aes.IV = iv;   // AES needs a 16-byte IV
+
                 byte[] cipherText = null;
 
                 using (MemoryStream ms = new MemoryStream())
@@ -39,19 +36,17 @@ namespace backend.ExtensionMethods
             
         }
 
-        public static string Decrypt(this string text, string keyString)
+        public static string Decrypt(this string text, string secretString, string clientIdString)
         {
-            var key = Convert.FromBase64String(keyString);
+            var key = Convert.FromBase64String(secretString);
+            var iv = Convert.FromBase64String(clientIdString);
             var textArray = Convert.FromBase64String(text);
             using (Aes aes = new AesManaged())
             {
                 aes.Padding = PaddingMode.PKCS7;
-                aes.KeySize = 128;          // in bits
+                aes.KeySize = 256;          // in bits
                 aes.Key = key;  // 32 bytes for 256 bit encryption
-                aes.IV = key;   // AES needs a 16-byte IV
-                                // Should set Key and IV here.  Good approach: derive them from 
-                                // a password via Cryptography.Rfc2898DeriveBytes 
-                
+                aes.IV = iv;   // AES needs a 16-byte IV
 
                 byte[] plainText = null;
 

@@ -21,7 +21,3 @@ namespace backend.Database
         public bool PendingResponse { get; set; }
     }
 }
-
-//LuckyNoS7evin -> S7evBot
-
-    //S7evbot -> Accept or Decline

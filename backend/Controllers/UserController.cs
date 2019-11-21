@@ -43,7 +43,7 @@ namespace backend.Controllers
                 {
                     UserId = userId,
                     ClientId = GenerateCode(16),
-                    Secret = GenerateCode(16)
+                    Secret = GenerateCode(32)
                 };
 
                 await _userRepository.SaveUserAsync(user);
