@@ -1,10 +1,8 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
-using Amazon.DynamoDBv2.Model;
 using backend.Database;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace backend.Repositories
@@ -17,6 +15,11 @@ namespace backend.Repositories
             _context = new DynamoDBContext(client);
         }
         
+        public Task<Message> GetMessageAsync(Guid id)
+        {
+            return _context.LoadAsync<Message>(id);
+        }
+
         public Task<List<Message>> GetMessagesByChannelIdAsync(string id)
         {
             var userQuery = new Amazon.DynamoDBv2.DocumentModel.QueryOperationConfig

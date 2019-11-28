@@ -12,6 +12,8 @@ namespace backend.Database
         [DynamoDBProperty]
         public string ChannelId { get; set; }
         [DynamoDBProperty]
+        public string FromChannelId { get; set; }
+        [DynamoDBProperty]
         public MessageType Type { get; set; }
         [DynamoDBProperty]
         public string MessageString { get; set; }
@@ -19,5 +21,7 @@ namespace backend.Database
         public bool Delivered { get; set; }
         [DynamoDBProperty]
         public DateTime ExpiresAt { get; set; }
+        [DynamoDBProperty]
+        public DateTime CreatedAt { get; set; }
     }
 }

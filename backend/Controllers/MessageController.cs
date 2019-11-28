@@ -1,5 +1,4 @@
 ﻿using backend.Database;
-using backend.ExtensionMethods;
 using backend.Models;
 using backend.Repositories;
 using backend.Services;
@@ -18,6 +17,7 @@ namespace backend.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(AuthenticationSchemes = "BCF")]
     public class MessageController : ControllerBase
     {
         private readonly ILogger<BotController> _logger;
@@ -37,80 +37,57 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(MessageRequestModel model)
         {
-            if (!HttpContext.Request.Headers.ContainsKey("client-id"))
-            {
-                return Unauthorized();
-            }
-            
-            var users = await _userRepository.GetUsersByClientIdAsync(HttpContext.Request.Headers["client-id"]);
-            if (users == null || users.Count == 0)
-            {
-                return Unauthorized();
-            }
-            var user = users.FirstOrDefault();
+            var messageIds = new List<Guid>();
 
-            string decryptedMessage;
-            try
+            foreach (var channelId in model.ChannelIds)
             {
-                decryptedMessage = model.Message.Decrypt(user.Secret, HttpContext.Request.Headers["client-id"]);
-            } 
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
+                var dbModel = new Message
+                {
+                    MessageId = Guid.NewGuid(),
+                    FromChannelId = User.Identity.Name,
+                    ChannelId = channelId,
+                    Delivered = false,
+                    MessageString = model.MessageString,
+                    Type = model.Type,
+                    ExpiresAt = DateTime.UtcNow.AddDays(1),
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _messageRepository.SaveMessageAsync(dbModel);
+                messageIds.Add(dbModel.MessageId);
             }
 
-            if(string.IsNullOrEmpty(decryptedMessage))
-            {
-                return BadRequest("Message Invalid");
-            }
-            try
-            {
-                var messageModel = JsonConvert.DeserializeObject<MessageModel>(decryptedMessage);
 
-                var messageIds = new List<Guid>();
-                
-                foreach (var channelId in messageModel.ChannelIds)
-                { 
-                    var dbModel = new Message
-                    {
-                        MessageId = Guid.NewGuid(),
-                        ChannelId = channelId,
-                        Delivered = false,
-                        MessageString = messageModel.MessageString,
-                        Type = messageModel.Type,
-                        ExpiresAt = DateTime.UtcNow.AddDays(1)
-                    };
-                    await _messageRepository.SaveMessageAsync(dbModel);
-                    messageIds.Add(dbModel.MessageId);
-                }
-               
+            return Ok(new MessageResponseModel { MessageIds = messageIds });
 
-                return Ok(new MessageResponseModel { MessageIds = messageIds });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-          
         }
 
-        // [HttpGet]
-        // public async Task<IActionResult> Get()
-        // {
-        //     var user = await _userRepository.GetUserAsync("14900522");
-        //     if (user == null)
-        //     {
-        //         return Unauthorized();
-        //     }
-
-        //     var messageString = JsonConvert.SerializeObject(new MessageModel { 
-        //         ChannelIds =  new List<string> { "14900522" },
-        //         Type = Common.MessageType.GENERAL,
-        //         MessageString = "BlaBlaBla"
-        //     });
-
-        //     return Ok(messageString.Encrypt(user.Secret, user.ClientId));
-        // }
-
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            var user = await _userRepository.GetUserAsync(User.Identity.Name);
+            var messages = await _messageRepository.GetMessagesByChannelIdAsync(user.UserId);
+            return Ok(messages.Select(x=> new MessageModel {
+                MessageId = x.MessageId,
+                Type = x.Type,
+                MessageString = x.MessageString,
+                FromChannelId = x.FromChannelId,
+                ExpiresAt = x.ExpiresAt,
+                CreatedAt = x.CreatedAt,
+                Delivered = x.Delivered
+            }).OrderBy(x=>x.CreatedAt));
+        }
+        
+        [HttpPut("{id}/Delivered")]
+        public async Task<IActionResult> Put(Guid id)
+        { 
+            var message = await _messageRepository.GetMessageAsync(id);
+            if(message.ChannelId != User.Identity.Name)
+            {
+                return Unauthorized();
+            }
+            message.Delivered = true;
+            await _messageRepository.SaveMessageAsync(message);
+            return Ok();
+        }
     }
 }

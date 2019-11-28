@@ -14,6 +14,11 @@ using Amazon;
 using Amazon.DynamoDBv2;
 using backend.Repositories;
 using backend.Services;
+using System.Collections.Generic;
+using System.Text;
+using System;
+using System.Security.Claims;
+using backend.Hubs;
 
 namespace backend
 {
@@ -39,8 +44,11 @@ namespace backend
             services.AddScoped<MessageRepository>();
             services.AddHttpClient<TwitchService>();
 
+            var userService = services.BuildServiceProvider().GetService<UserRepository>();
+
             IConfigurationManager<OpenIdConnectConfiguration> configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>($"https://id.twitch.tv/oauth2/.well-known/openid-configuration", new OpenIdConnectConfigurationRetriever());
             OpenIdConnectConfiguration openIdConfig = configurationManager.GetConfigurationAsync(CancellationToken.None).Result;
+            
 
             services.AddAuthentication(cfg =>
             {
@@ -64,6 +72,38 @@ namespace backend
                     IssuerSigningKeys = openIdConfig.SigningKeys,
                     NameClaimType = "preferred_username"
                 };
+            })
+            .AddJwtBearer("BCF", cfg => {
+                cfg.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateLifetime = true,
+                    ValidateIssuer = true,
+                    ValidIssuer = "https://botcommunicationframework.com",
+                    ValidateAudience = true,
+                    AudienceValidator = new AudienceValidator((audiences, securityToken, validationParameters) => {
+                        var valid = false;
+                        foreach (var id in audiences)
+                        {
+                            var users = userService.GetUsersByClientIdAsync(id).GetAwaiter().GetResult();
+                            if (users != null && users.Count > 0) valid = true;
+                        }
+                        return valid;
+                    }),
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKeyResolver = new IssuerSigningKeyResolver((token, securityToken, kid, validationParameters) => {
+                        var users = userService.GetUsersByClientIdAsync(kid).GetAwaiter().GetResult();
+                        var keys = new List<SecurityKey>();
+                        if (users == null || users.Count == 0) return keys;
+
+                        users.ForEach(user => {
+                            var signingKey = new SymmetricSecurityKey(Convert.FromBase64String(user.Secret));
+                            keys.Add(signingKey);
+                        });
+                        
+                        return keys;
+                    }),
+                    NameClaimType = ClaimTypes.NameIdentifier
+                };
             });
 
             services.AddCors(options =>
@@ -71,11 +111,16 @@ namespace backend
                 options.AddPolicy(MyAllowSpecificOrigins,
                 builder =>
                 {
-                    builder.WithOrigins("http://localhost:8080").AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+                    builder
+                        .WithOrigins("http://localhost:8080")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
                 });
             });
 
             services.AddControllers();
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -94,8 +139,10 @@ namespace backend
 
             app.UseAuthorization();
 
+
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHub<MessageHub>("/messageHub");
                 endpoints.MapControllers();
             });
         }
