@@ -47,5 +47,16 @@ namespace backend.Hubs
             }
 
         }
+
+        public async Task DeliveredAsync(Guid id)
+        {
+            var message = await _messageRepository.GetMessageAsync(id);
+            if (message.ChannelId != Context.User.Identity.Name)
+            {
+                return;
+            }
+            message.Delivered = true;
+            await _messageRepository.SaveMessageAsync(message);
+        }
     }
 }

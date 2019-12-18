@@ -29,6 +29,7 @@ namespace backend.Controllers
         }
 
         [HttpGet]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<List<ChannelBotLinkModel>> Get()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -49,6 +50,7 @@ namespace backend.Controllers
         }
 
         [HttpPost]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<ActionResult<ChannelBotLinkModel>> Post(BotLinkRequestModel model)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -91,6 +93,7 @@ namespace backend.Controllers
         }
 
         [HttpPut]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<ActionResult<ChannelBotLinkModel>> Put(BotLinkAcceptModel model)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

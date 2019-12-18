@@ -1,21 +1,23 @@
 ﻿using backend.Common;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace backend.Models
 {
     public class MessageRequestModel
     {
-        [JsonProperty("channelIds")]
+        [Required]
+        [JsonPropertyName("channelIds")]
         public List<string> ChannelIds { get; set; }
 
-        [JsonProperty("type")]
-        [JsonConverter(typeof(StringEnumConverter))]
+        [Required]
+        [JsonPropertyName("type")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MessageType Type { get; set; }
 
-        [JsonProperty("message")]
+        [Required]
+        [JsonPropertyName("message")]
         public string MessageString { get; set; }
     }
 }

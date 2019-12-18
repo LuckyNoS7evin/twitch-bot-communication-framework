@@ -1,13 +1,10 @@
 ﻿using backend.Database;
 using backend.Models;
 using backend.Repositories;
-using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -29,6 +26,7 @@ namespace backend.Controllers
         }
 
         [HttpGet]
+        [ApiExplorerSettings(IgnoreApi = true)]
         public async Task<UserModel> Get()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

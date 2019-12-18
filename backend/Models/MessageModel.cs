@@ -1,32 +1,31 @@
 ﻿using backend.Common;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
+using System.Text.Json.Serialization;
 
 namespace backend.Models
 {
     public class MessageModel
     {
-        [JsonProperty("messageId")]
+        [JsonPropertyName("messageId")]
         public Guid MessageId { get; set; }
 
-        [JsonProperty("type")]
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonPropertyName("type")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MessageType Type { get; set; }
 
-        [JsonProperty("from")]
+        [JsonPropertyName("from")]
         public string FromChannelId { get; set; }
 
-        [JsonProperty("message")]
+        [JsonPropertyName("message")]
         public string MessageString { get; set; }
 
-        [JsonProperty("delivered")]
+        [JsonPropertyName("delivered")]
         public bool Delivered { get; set; }
 
-        [JsonProperty("expiresAt")]
+        [JsonPropertyName("expiresAt")]
         public DateTime ExpiresAt { get; set; }
 
-        [JsonProperty("createdAt")]
+        [JsonPropertyName("createdAt")]
         public DateTime CreatedAt { get; set; }
     }
 }
