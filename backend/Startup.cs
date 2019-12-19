@@ -174,6 +174,7 @@ namespace backend
             {
                 c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "My API V1"); 
             });
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<MessageHub>("/messageHub");
