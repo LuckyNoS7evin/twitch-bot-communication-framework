@@ -2,7 +2,6 @@
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,10 +14,10 @@ using Amazon.DynamoDBv2;
 using backend.Repositories;
 using backend.Services;
 using System.Collections.Generic;
-using System.Text;
 using System;
 using System.Security.Claims;
 using backend.Hubs;
+using Microsoft.OpenApi.Models;
 
 namespace backend
 {
@@ -119,6 +118,33 @@ namespace backend
                 });
             });
 
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1.0", new OpenApiInfo { Title = "Main API v1.0", Version = "v1.0" });
+                c.DescribeAllEnumsAsStrings();
+                //// Swagger 2.+ support
+                var security = new Dictionary<string, IEnumerable<string>>
+                {
+                    { "Bearer", new string[] { } },
+                };
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                        },
+                        new[] { "readAccess", "writeAccess" }
+                    }
+                });
+            });
             services.AddControllers();
             services.AddSignalR();
         }
@@ -139,7 +165,15 @@ namespace backend
 
             app.UseAuthorization();
 
-
+            if (env.IsDevelopment())
+            {
+                // Enable middleware to serve generated Swagger as a JSON endpoint.
+                app.UseSwagger();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "My API V1"); 
+                });
+            }
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<MessageHub>("/messageHub");
