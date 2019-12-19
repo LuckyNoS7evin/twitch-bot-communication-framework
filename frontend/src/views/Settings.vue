@@ -226,7 +226,7 @@ export default {
         })
     },
     getLinks () {
-      axios.get(`https://localhost:5001/bot`, {
+      axios.get(`${process.env.VUE_APP_API_ENDPOINT}bot`, {
         headers: {
           'Authorization': `Bearer ${this.user.id_token}`
         }
@@ -236,7 +236,7 @@ export default {
         })
     },
     linkRequest (model) {
-      axios.post(`https://localhost:5001/bot`, model, {
+      axios.post(`${process.env.VUE_APP_API_ENDPOINT}bot`, model, {
         headers: {
           'Authorization': `Bearer ${this.user.id_token}`
         }
@@ -268,7 +268,7 @@ export default {
         })
     },
     accept (link) {
-      axios.put(`https://localhost:5001/bot`, {
+      axios.put(`${process.env.VUE_APP_API_ENDPOINT}bot`, {
         channelId: link.channelId,
         botId: link.botId,
         accepted: true
@@ -282,7 +282,7 @@ export default {
         })
     },
     decline (link) {
-      axios.put(`https://localhost:5001/bot`, {
+      axios.put(`${process.env.VUE_APP_API_ENDPOINT}/bot`, {
         channelId: link.channelId,
         botId: link.botId,
         accepted: false

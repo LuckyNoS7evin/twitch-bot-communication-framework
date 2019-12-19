@@ -35,9 +35,12 @@ namespace backend
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(new BasicAWSCredentials(Configuration["AWS:Key"], Configuration["AWS:Secret"]));
-            services.AddSingleton(RegionEndpoint.USEast2);
-            services.AddScoped<AmazonDynamoDBClient>();
+            //services.AddSingleton(new BasicAWSCredentials());
+            //services.AddSingleton(RegionEndpoint.USEast2);
+
+           
+
+            services.AddSingleton(new AmazonDynamoDBClient(Configuration["AWS:Key"], Configuration["AWS:Secret"], RegionEndpoint.USEast2));
             services.AddScoped<ChannelRepository>();
             services.AddScoped<UserRepository>();
             services.AddScoped<MessageRepository>();
@@ -111,7 +114,7 @@ namespace backend
                 builder =>
                 {
                     builder
-                        .WithOrigins("http://localhost:8080")
+                        .WithOrigins("http://localhost:8080", "https://bcf.sweetffa.com")
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials();
@@ -165,15 +168,12 @@ namespace backend
 
             app.UseAuthorization();
 
-            if (env.IsDevelopment())
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                // Enable middleware to serve generated Swagger as a JSON endpoint.
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "My API V1"); 
-                });
-            }
+                c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "My API V1"); 
+            });
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<MessageHub>("/messageHub");

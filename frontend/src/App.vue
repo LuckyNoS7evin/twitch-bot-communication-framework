@@ -5,6 +5,8 @@
       color="primary"
       dark
     >
+      <router-link  to="/">Home</router-link>
+      <router-link v-if="user !== null" to="/settings">Settings</router-link>
       <v-spacer></v-spacer>
       <v-btn
         text
