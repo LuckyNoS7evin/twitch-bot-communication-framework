@@ -9,6 +9,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   state: {
     swaggerUrl: process.env.VUE_APP_SWAGGER_TEST_ENDPOINT,
+    apiUrl: process.env.VUE_APP_API_ENDPOINT,
     apiJwt: '',
     user: null,
     userInformation: null
@@ -49,22 +50,7 @@ export default new Vuex.Store({
         .then(() => oidcManager.getUser())
         .then(user => {
           context.commit('user', user)
-          return axios.get(`https://localhost:5001/user`, {
-            headers: {
-              'Authorization': `Bearer ${user.id_token}`
-            }
-          })
-        })
-        .then(userInfo => {
-          context.commit('userInformation', userInfo.data)
-          return true
-        })
-    },
-    load (context) {
-      oidcManager.getUser()
-        .then(user => {
-          context.commit('user', user)
-          return axios.get(`https://localhost:5001/user`, {
+          return axios.get(`${context.state.apiUrl}user`, {
             headers: {
               'Authorization': `Bearer ${user.id_token}`
             }
@@ -79,7 +65,30 @@ export default new Vuex.Store({
             subject: userInfo.data.userId,
             expiresIn: '30m'
           }))
-
+          return true
+        })
+    },
+    load (context) {
+      oidcManager.getUser()
+        .then(user => {
+          if (user === null) return false
+          context.commit('user', user)
+          return axios.get(`${context.state.apiUrl}user`, {
+            headers: {
+              'Authorization': `Bearer ${user.id_token}`
+            }
+          })
+        })
+        .then(userInfo => {
+          if (!userInfo) return true
+          context.commit('userInformation', userInfo.data)
+          context.commit('apiJwt', jwt.sign({}, Buffer.from(userInfo.data.secret, 'base64'), {
+            keyid: userInfo.data.clientId,
+            audience: userInfo.data.clientId,
+            issuer: 'https://botcommunicationframework.com',
+            subject: userInfo.data.userId,
+            expiresIn: '30m'
+          }))
           return true
         })
     }
